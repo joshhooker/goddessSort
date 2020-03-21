@@ -12,5 +12,6 @@
   "SX3Threshold": 200,
   "ICTrackingThreshold": 200,
   "unpackGRETINA": true,
-  "mergeTrees": true
+  "mergeTrees": true,
+  "gretinaRandoms": false
 }

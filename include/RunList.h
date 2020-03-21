@@ -38,6 +38,7 @@ private:
     std::vector<std::string> listNumbers;
     bool unpackGRETINA;
     bool mergeTrees;
+    bool gretinaRandoms;
 };
 
 #endif // RunList_h

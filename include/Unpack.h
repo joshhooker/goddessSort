@@ -8,6 +8,7 @@
 #include "UnpackORRUBA.h"
 #include "Utilities.h"
 
+#include <algorithm>
 #include <bitset>
 #include <ctime>
 #include <fstream>

@@ -20,6 +20,8 @@ typedef struct fileListStruct {
     bool copyCuts;
     bool unpackGRETINA;
     bool mergeTrees;
+    bool gretinaRandoms;
+    std::string randomsPath;
 } fileListStruct;
 
 // Detector structures

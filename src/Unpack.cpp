@@ -98,6 +98,7 @@ void Unpack::CombineReader(fileListStruct run) {
     // The difference of timestamps is to be < 1000 which is a lot considering the timestamps between two ORRUBA events
     // are generally on the order of 100,000.
     std::vector<matchedEvents> matchedEvents_;
+    std::vector<matchedEvents> gretinaRandomEvents_;
     for(size_t i = 0; i < orrubaTimeStamps_.size(); i++) {
         size_t found_j = 0;
         int found_index = 0;
@@ -140,6 +141,17 @@ void Unpack::CombineReader(fileListStruct run) {
     }
 
     std::cout << PrintOutput("\t\tMatched ORRUBA and GRETINA time stamps", "blue") << std::endl;
+
+    // If gretinaRandoms flag is true, find the gretina events that were not matched with orruba
+    std::vector<size_t> unmatchedGretinaEvents_;
+    if(run.gretinaRandoms) {
+        std::cout << PrintOutput("\t\tFinding GRETINA events not matched with ORRUBA for randoms", "blue") << std::endl;
+        for(size_t j = 0; j < gretinaTimeStamps_.size(); j++) {
+            auto it = std::find_if(matchedEvents_.begin(), matchedEvents_.end(), [=](const matchedEvents& l){ return j == l.gretinaNumber;});
+            if(it == matchedEvents_.end()) unmatchedGretinaEvents_.push_back(j);
+        }
+    }
+
 
     // Reset ORRUBA and GRETINA TTreeReaders
     t_ORRUBA.Restart();
@@ -399,11 +411,72 @@ void Unpack::CombineReader(fileListStruct run) {
         count++;
     }
 
+    tree_Combined->Write();
+    f_Combined->Close();
+
+    if(run.gretinaRandoms) {
+        // Probably a stupid way to do this but whatever
+        TFile* f_Randoms = new TFile(run.randomsPath.c_str(), "recreate");
+        TTree* tree_Randoms = new TTree("data", "GRETINA data not matched with ORRUBA");
+        Int_t rand_xtalsMul;
+        Float_t rand_xtals_xlab[128];
+        Float_t rand_xtals_ylab[128];
+        Float_t rand_xtals_zlab[128];
+        Float_t rand_xtals_cc[128];
+        Float_t rand_xtals_edop[128];
+        Float_t rand_xtals_edopMaxInt[128];
+        Float_t rand_xtals_edopSeg[128];
+        Float_t rand_xtals_edopXtal[128];
+        Int_t rand_xtals_crystalNum[128];
+        Int_t rand_xtals_quadNum[128];
+        Float_t rand_xtals_t0[128];
+        Long64_t rand_xtals_timestamp[128];
+
+        tree_Randoms->Branch("xtalsMul", &rand_xtalsMul, "xtalsMul/I");
+        tree_Randoms->Branch("xtals_xlab", &rand_xtals_xlab, "xtals_xlab[xtalsMul]/F");
+        tree_Randoms->Branch("xtals_ylab", &rand_xtals_ylab, "xtals_ylab[xtalsMul]/F");
+        tree_Randoms->Branch("xtals_zlab", &rand_xtals_zlab, "xtals_zlab[xtalsMul]/F");
+        tree_Randoms->Branch("xtals_cc", &rand_xtals_cc, "xtals_cc[xtalsMul]/F");
+        tree_Randoms->Branch("xtals_edop", &rand_xtals_edop, "xtals_edop[xtalsMul]/F");
+        tree_Randoms->Branch("xtals_edopMaxInt", &rand_xtals_edopMaxInt, "xtals_edopMaxInt[xtalsMul]/F");
+        tree_Randoms->Branch("xtals_edopSeg", &rand_xtals_edopSeg, "xtals_edopSeg[xtalsMul]/F");
+        tree_Randoms->Branch("xtals_edopXtal", &rand_xtals_edopXtal, "xtals_edopXtal[xtalsMul]/F");
+        tree_Randoms->Branch("xtals_crystalNum", &rand_xtals_crystalNum, "xtals_crystalNum[xtalsMul]/I");
+        tree_Randoms->Branch("xtals_quadNum", &rand_xtals_quadNum, "xtals_quadNum[xtalsMul]/I");
+        tree_Randoms->Branch("xtals_t0", &rand_xtals_t0, "xtals_t0[xtalsMul]/F");
+        tree_Randoms->Branch("xtals_timestamp", &rand_xtals_timestamp, "xtals_timestamp[xtalsMul]/L");
+
+        for(auto j: unmatchedGretinaEvents_) {
+            rand_xtalsMul = 0;
+            tree_GRETINA->GetEntry(j);
+            for(auto g2Event: g2->xtals) {
+                rand_xtals_xlab[rand_xtalsMul] = g2Event.maxIntPtXYZLab().X();
+                rand_xtals_ylab[rand_xtalsMul] = g2Event.maxIntPtXYZLab().Y();
+                rand_xtals_zlab[rand_xtalsMul] = g2Event.maxIntPtXYZLab().Z();
+                rand_xtals_cc[rand_xtalsMul] = g2Event.cc;
+                rand_xtals_edop[rand_xtalsMul] = g2Event.edop;
+                rand_xtals_edopMaxInt[rand_xtalsMul] = g2Event.edop_maxInt;
+                rand_xtals_edopSeg[rand_xtalsMul] = g2Event.edopSeg;
+                rand_xtals_edopXtal[rand_xtalsMul] = g2Event.edopXtal;
+                rand_xtals_crystalNum[rand_xtalsMul] = g2Event.crystalNum;
+                rand_xtals_quadNum[rand_xtalsMul] = g2Event.quadNum;
+                rand_xtals_t0[rand_xtalsMul] = g2Event.t0;
+                rand_xtals_timestamp[rand_xtalsMul] = g2Event.timestamp;
+                rand_xtalsMul++;
+            }
+            tree_Randoms->Fill();
+        }
+        tree_Randoms->Write();
+        f_Randoms->Close();
+    }
+
     f_ORRUBA->Close();
     f_GRETINA->Close();
 
-    tree_Combined->Write();
-    f_Combined->Close();
+    if(run.gretinaRandoms) {
+        TFile* f_randoms = new TFile(run.combinedPath.c_str(), "recreate");
+        TTree* tree_randoms = new TTree("data", "Combined ORRUBA and GRETINA data");
+    }
 
     delete RunNumber;
 

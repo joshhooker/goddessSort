@@ -25,6 +25,8 @@ RunList::RunList() {
     unpackGRETINA = config["unpackGRETINA"].asBool();
     mergeTrees = config["mergeTrees"].asBool();
 
+    gretinaRandoms = config["gretinaRandoms"].asBool();
+
     if(!useAllFolders) CompileListOfRuns();
     else GetAllRuns();
 }
@@ -41,8 +43,10 @@ void RunList::CompileListOfRuns() {
         std::string globalPath = pathToFolders + pathPrefix + run + "/Global.dat";
         std::string gretinaPath = outputPath + pathPrefix + run + "_gretina.root";
         std::string combinedPath = outputPath + pathPrefix + run + "_combined.root";
+        std::string randomsPath = outputPath + pathPrefix + run + "_randoms.root";
 
-        fileListStruct indFile = {pathToFolders, outputPath, ldfPath, rootPath, run, preCutPath, cutPath, globalPath, gretinaPath, combinedPath, copyCuts, unpackGRETINA, mergeTrees};
+        fileListStruct indFile = {pathToFolders, outputPath, ldfPath, rootPath, run, preCutPath, cutPath, 
+                                  globalPath, gretinaPath, combinedPath, copyCuts, unpackGRETINA, mergeTrees, gretinaRandoms, randomsPath};
         listOfRuns.push_back(indFile);
     }
 }
@@ -79,8 +83,10 @@ void RunList::GetAllRuns() {
         std::string globalPath = pathToFolders + pathPrefix + run.runName + "/Global.dat";
         std::string gretinaPath = outputPath + pathPrefix + run.runName + "_gretina.root";
         std::string combinedPath = outputPath + pathPrefix + run.runName + "_combined.root";
+        std::string randomsPath = outputPath + pathPrefix + run.runName + "_randoms.root";
 
-        fileListStruct indFile = {pathToFolders, outputPath, ldfPath, rootPath, run.runName, preCutPath, cutPath, globalPath, gretinaPath, combinedPath, copyCuts, unpackGRETINA, mergeTrees};
+        fileListStruct indFile = {pathToFolders, outputPath, ldfPath, rootPath, run.runName, preCutPath, cutPath, 
+                                  globalPath, gretinaPath, combinedPath, copyCuts, unpackGRETINA, mergeTrees, gretinaRandoms, randomsPath};
         listOfRuns.push_back(indFile);
     }
 }
